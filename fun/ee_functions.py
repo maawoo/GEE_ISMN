@@ -1,22 +1,39 @@
+import ee
+import numpy as np
+import pandas as pd
+import datetime
 
-def lc_filter(location_dict):
+def process_geojson(geojson, box_yn, box_size=1):
+    """
+    """
+    geo_list = []
+    if box_yn == 0:
+        for i in range(len(geojson)):
+            geo_list.append(ee.Geometry.Point(geojson["geometry"][i].y, geojson["geometry"][i].x))
+
+    elif box_yn == 1:
+        for i in range(len(geojson)):
+            geo_list.append(ee.Geometry.Point(geojson["geometry"][i].y, geojson["geometry"][i].x).buffer(box_size/2)
+                            .bounds())
+
+    return geo_list
+
+
+def lc_filter(geo_list):
     """
     description of the function
     """
     lc = ee.ImageCollection("COPERNICUS/Landcover/100m/Proba-V/Global").first()
     valid_ids = [20, 30, 40, 60, 100]
-    lc_dict = {}
+    geo_list_filt = []
 
-    for name, location in location_dict.items():
-        lc_value = lc.select("discrete_classification").reduceRegion(ee.Reducer.first(), location, 10).get(
+    for geo in range(len(geo_list)):
+        lc_value = lc.select("discrete_classification").reduceRegion(ee.Reducer.first(), geo, 10).get(
             "discrete_classification")
-        lc_dict[name] = lc_value.getInfo()
+        if lc_value in valid_ids:
+            geo_list_filt.append(geo)
 
-    for name, value in lc_dict.items():
-        if value not in valid_ids:
-            del location_dict[name]
-
-    return location_dict
+    return geo_list_filt
 
 
 def get_image_collection(location_dict):
