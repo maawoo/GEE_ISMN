@@ -28,15 +28,15 @@ def lc_filter(geo_list):
     geo_list_filt = []
 
     for geo in range(len(geo_list)):
-        lc_value = lc.select("discrete_classification").reduceRegion(ee.Reducer.first(), geo, 10).get(
-            "discrete_classification")
+        lc_value = lc.select("discrete_classification").reduceRegion(ee.Reducer.first(), geo_list[geo], 10).get(
+            "discrete_classification").getInfo()
         if lc_value in valid_ids:
-            geo_list_filt.append(geo)
+            geo_list_filt.append(geo_list[geo])
 
     return geo_list_filt
 
 
-def get_image_collection(location_dict):
+def get_image_collection(geo_list_filt):
     """
     description of the function
     """
@@ -47,16 +47,13 @@ def get_image_collection(location_dict):
     res = ee.Filter.eq('resolution', 'H')  # H = High
 
     ## Apply filters to image collection for each location and save results in dictionary
-    for name, location in location_dict.items():
-        s1 = ee.ImageCollection('COPERNICUS/S1_GRD').filter(mode).filter(res).filterBounds(location)
+    for geo in range(len(geo_list_filt)):
+        s1 = ee.ImageCollection('COPERNICUS/S1_GRD').filter(mode).filter(res).filterBounds(geo_list_filt[geo])
         s1_desc = s1.filter(ee.Filter.eq('orbitProperties_pass', 'DESCENDING'))
         s1_asc = s1.filter(ee.Filter.eq('orbitProperties_pass', 'ASCENDING'))
 
         ## Add data to dictionary
-        imagecoll[name] = [location, s1_desc, s1_asc]
-
-    ## Convert to dataframe
-    # ImageColl = pd.DataFrame(ImageColl)
+        imagecoll["geo_" + str(geo)] = [geo_list_filt[geo], s1_desc, s1_asc]
 
     return imagecoll
 
