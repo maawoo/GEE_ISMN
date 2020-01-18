@@ -41,26 +41,40 @@ if box_yn == 1:
 else:
     ee_geo = ee_functions.process_geojson(geo, box_yn)
 
-ee_geo[1].getInfo()
+#ee_geo[1].getInfo()
 
 ###################################################
 ## Import land cover data and filter the locations
 
 ee_geo_filt = ee_functions.lc_filter(ee_geo)
-print(ee_geo_filt)
+print(len(ee_geo_filt))
 
 ###################################################
 ## Load and filter Sentinel-1 image collection
 
-img_coll = ee_functions.get_image_collection(geo_dict_filt)
+img_coll = ee_functions.get_image_collection(ee_geo_filt)
 img_coll.items()
 
 ###################################################
 ## Extract backscatter data for each location
 
-s1_data = ee_functions.time_series_of_a_point(img_coll["geo5"][1], img_coll["geo5"][0])
-s1_data
+## Point
+for key in img_coll.keys():
+    s1_data = ee_functions.time_series_of_a_point(img_coll[key][1], img_coll[key][0])
+    s1_data.reset_index().plot(x='Dates', y='VV')
+    plt.savefig("./figs/" + str(key) + ".png")
+    plt.close()
 
-s1_data.reset_index().plot(x='Dates', y='VH')
-s1_data.reset_index().plot(x='Dates', y='VV')
-plt.show()
+## Region
+for key in img_coll.keys():
+    s1_data = ee_functions.time_series_of_a_region(img_coll[key][1], img_coll[key][0])
+    s1_data.reset_index().plot(x='Dates', y='VV')
+    plt.savefig("./figs/" + str(key) + "_sq50.png")
+    plt.close()
+
+#s1_data = ee_functions.time_series_of_a_point(img_coll["geo_1"][1], img_coll["geo_1"][0])
+#s1_data
+
+#s1_data.reset_index().plot(x='Dates', y='VH')
+#s1_data.reset_index().plot(x='Dates', y='VV')
+#plt.show()
