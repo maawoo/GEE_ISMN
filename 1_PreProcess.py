@@ -66,14 +66,16 @@ def get_info_from_file(filename):
     return header_elements, filename_elements
 
 
-coords = []
+coord_1 = []
+coord_2 = []
 station = []
 features = []
 
 for i in listOfCopies:
     checked_file_1 = open(i)
     header_elements, filename_elements = get_info_from_file(i)
-    coords.append(header_elements[3] + "/" + header_elements[4])
+    coord_1.append(header_elements[3])
+    coord_2.append(header_elements[4])
     station.append(
         header_elements[1] + "-" + header_elements[2] + "-" + header_elements[
             8])
@@ -87,5 +89,6 @@ with open('coordinates_2.geojson', 'w') as fb:
 
 with open('stations.csv', 'w') as csvfile:
     filewriter = csv.writer(csvfile, delimiter=',')
-    filewriter.writerow(coords)
     filewriter.writerow(station)
+    filewriter.writerow(coord_1)
+    filewriter.writerow(coord_2)
