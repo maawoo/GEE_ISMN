@@ -9,8 +9,7 @@ def setup_dir():
     bla bla
     :return:
     """
-    os.chdir('./data/')
-    newDir = './ISMN_Filt/'
+    newDir = './data/ISMN_Filt/'
 
     if not os.path.exists(newDir):
         os.mkdir(newDir)
@@ -24,7 +23,7 @@ def get_sm_files():
     bla bla
     :return:
     """
-    return [f for f in glob.glob("./ISMN/**/*_sm_*.stm", recursive=True)]
+    return [f for f in glob.glob("./data/ISMN/**/*_sm_*.stm", recursive=True)]
 
 
 def filter_files(file_list, measurement_depth):
@@ -41,9 +40,10 @@ def filter_files(file_list, measurement_depth):
         first = checked_file.readline()
 
         if re.match(regex, first):
-            shutil.copy2(file, './ISMN_Filt/')
+            shutil.copy2(file, './data/ISMN_Filt/')
 
-    return [f for f in glob.glob("./ISMN_Filt/**/*_sm_*.stm", recursive=True)]
+    return [f for f in glob.glob("./data/ISMN_Filt/**/*_sm_*.stm",
+                                 recursive=True)]
 
 
 def get_info_from_file(filename):
