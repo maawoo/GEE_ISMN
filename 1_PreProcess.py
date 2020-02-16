@@ -1,69 +1,15 @@
-import os
-import io
-import re
-import glob
-import shutil
 import csv
 from geojson import Point, Feature, FeatureCollection, dump
+from fun import preprocess
 
-## Set Working Directory
-# os.chdir('C:/Users/Patrick/Desktop/Geo419_Projekt/')
-# header = 'Header/'
-os.chdir('E:/Material_GEO419/')
-header = 'Headerfiles_Data_seperate_files_header_20140401_20191015_6179_' \
-         'v3V1_20191015/ '
+preprocess.setup_dir()
 
-## Create new Folder
-newDir = 'Filtered_Data'
+## List all .stm files
+sm_files = preprocess.get_sm_files()
 
-if not os.path.exists(newDir):
-    os.mkdir(newDir)
-    print("Directory ", newDir, " Created ")
-else:
-    print("Directory ", newDir, " already exists")
-
-## Find Data which matters and copy it into the new Folder
-
-
-## List .stm data    ! 
-listOfFiles = [f for f in glob.glob(header + "**/*_sm_*.stm", recursive=True)]
-
-searched_depth = "0.05"
-regex = r".+\d{1,2}\.\d+\s+" + re.escape(searched_depth)
-
-
-## find all Data with "0.00    0.05" in first line. !
-## copy data to 'Filtered_Data' !
-def filter_files(file_name, regex):
-    checked_file = open(file_name)
-    first = checked_file.readline()
-#   print(first)
-    if re.match(regex, first):
-        shutil.copy2(file_name, 'Filtered_Data')
-#       print("Found!")
-#   else:
-#       print("Not Found!")
-
-## Loop this through all subdirectories in the Working_Directory !
-for i in listOfFiles:
-    filter_files(i, regex)
-
-listOfCopies = [f for f in glob.glob(newDir + "**/*.stm", recursive=True)]
-
-
-def get_info_from_file(filename):
-    """
-    @author: Christoph Paulik & Philip Buttinger
-    ISMN Package: https://github.com/TUW-GEO/ismn
-    """
-    with io.open(filename, mode='r', newline=None) as f:
-        header = f.readline()
-    header_elements = header.split()
-
-    path, filen = os.path.split(filename)
-    filename_elements = filen.split('_')
-
-    return header_elements, filename_elements
+## Filter soil moisture files by measurement depth
+depth = "0.05"
+sm_files_filt = preprocess.filter_files(sm_files, depth)
 
 
 coord_1 = []
@@ -71,9 +17,9 @@ coord_2 = []
 station = []
 features = []
 
-for i in listOfCopies:
+for i in sm_files_filt:
     checked_file_1 = open(i)
-    header_elements, filename_elements = get_info_from_file(i)
+    header_elements, filename_elements = preprocess.get_info_from_file(i)
     coord_1.append(header_elements[3])
     coord_2.append(header_elements[4])
     station.append(
@@ -87,7 +33,7 @@ feature_collection = FeatureCollection(features)
 with open('coordinates_2.geojson', 'w') as fb:
     dump(feature_collection, fb)
 
-with open('stations.csv', 'w') as csvfile:
+with open('stations.csv', 'w', newline='') as csvfile:
     filewriter = csv.writer(csvfile, delimiter=',')
     filewriter.writerow(station)
     filewriter.writerow(coord_1)
