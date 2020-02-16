@@ -1,71 +1,34 @@
 import matplotlib.pyplot as plt
 import pandas as pd
 import geopandas as gpd
-import ee
 from fun import ee_functions
 
-#############################################
+
 # Initiate GEE & ask for user input
+user_input = ee_functions.setup_ee()
 
-#ee.Authenticate()
-ee.Initialize()
 
-while True:
-    try:
-        box_yn = int(input("Do you want to extract... \n backscatter values "
-                           "for the pixel coordinate (input: 0) \n or "
-                           "the mean backscatter value for a box "
-                           "surrounding the pixel coordinate (input: "
-                           "1)?"))
-    except ValueError:
-        print("Sorry, I didn't understand that.")
-        continue
-
-    if box_yn not in (0, 1):
-        print("Not an appropriate choice.")
-        continue
-
-    elif box_yn == 1:
-        try:
-            box_size = int(input("Please enter a box size (e.g. 20 is equal "
-                                 "to a box of size 20 by 20 meters):"))
-        except ValueError:
-            print("Sorry, I didn't understand that.")
-            continue
-        else:
-            break
-
-    else:
-        break
-
-#############################################
 # Import and process location data
-
 geo = gpd.read_file('./data/coordinates_2.geojson')
+ee_geo = ee_functions.process_geojson(geo, user_input)
 
-if box_yn == 1:
-    ee_geo = ee_functions.process_geojson(geo, box_yn, box_size)
-else:
-    ee_geo = ee_functions.process_geojson(geo, box_yn)
 
-#############################################
 # Import land cover data and filter the locations
-
 ee_geo_filt = ee_functions.lc_filter(ee_geo)
-print(str(len(ee_geo_filt)) +
-      " out of " + str(len(ee_geo)) +
-      " locations remain, after applying the land cover filter.")
 
-#############################################
+
 # Load and filter Sentinel-1 image collection
-
 img_coll = ee_functions.get_image_collection(ee_geo_filt)
 
-#############################################
-# Extract backscatter data for each location
 
+# Extract backscatter data for each location
 stations = pd.read_csv("./data/stations.csv")
 stations
+
+def ts_to_dict(img_collection, geo_list_filt):
+    out_dict = {}
+
+    stations = pd.read_csv("./data/stations.csv")
 
 
 # Point
