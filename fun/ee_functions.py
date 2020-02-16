@@ -3,35 +3,97 @@ import numpy as np
 import pandas as pd
 import datetime
 
-def process_geojson(geojson, box_yn, box_size=1):
+
+def setup_ee():
+    """
+    bla bla
+    :return:
+    """
+    try:
+        ee.Initialize()
+    except:
+        ee.Authenticate()
+        ee.Initialize()
+
+    user = {}
+
+    while True:
+        try:
+            user["box_yn"] = \
+                int(input("Do you want to extract... \n backscatter values "
+                          "for the pixel coordinate (input: 0) \n or "
+                          "the mean backscatter value for a box "
+                          "surrounding the pixel coordinate (input: "
+                          "1)?"))
+        except ValueError:
+            print("Sorry, I didn't understand that. \n ")
+            continue
+
+        if user["box_yn"] not in (0, 1):
+            print("Not an appropriate choice. \n ")
+            continue
+
+        elif user["box_yn"] == 1:
+            try:
+                user["box_size"] = int(input("Please enter a box size "
+                                             "(e.g. 20 is equal to a "
+                                             "box of size 20 by 20 "
+                                             "meters):"))
+            except ValueError:
+                print("Sorry, I didn't understand that. \n ")
+                continue
+
+            if user["box_size"] == 0:
+                print("Not an appropriate choice. \n ")
+                continue
+            else:
+                break
+
+        else:
+            user["box_size"] = 0
+            break
+
+    return user
+
+
+def process_geojson(geojson, user_input):
     """Creates a list of Earth Engine (EE) geometry objects from ISMN station
     coordinates.
 
+    :param user_input: Dictionary that was created via user input through
+    the setup_ee() function. Contains the following key / value pairs:
+        - box_yn / either 0 or 1
+            Depending on the value, either point objects (0) or polygons
+            that enclose the station coordinates (1) are returned.
+        - box_size / any integer > 0
+            Defines the polygon size surrounding the station coordinates and
+            will be used for the extraction of the mean backscatter of the
+            defined region.
     :param geojson: Imported GeoJSON file that includes ISMN station
     coordinates.
-    :param box_yn: (From user input) Value should be 0 or 1. Depending on
-    the value, either point objects (0) or polygons that enclose the
-    station coordinates (1) are returned.
-    :param box_size: (From user input) Value should be an integer >= 0.
-    Defines the polygon size surrounding the station coordinates and will be
-    used for the extraction of the mean backscatter of the defined region.
     :return: List of EE geometry objects.
     """
     geo_list = []
-    if box_yn == 0:
+    user = user_input
+
+    if user["box_yn"] == 0:
         for i in range(len(geojson)):
             geo_list.append(ee.Geometry.Point(geojson["geometry"][i].y,
                                               geojson["geometry"][i].x))
-    elif box_yn == 1:
+    elif user["box_yn"] == 1:
         for i in range(len(geojson)):
             geo_list.append(ee.Geometry.Point(geojson["geometry"][i].y,
                                               geojson["geometry"][i].x)
-                            .buffer(box_size/2)
+                            .buffer(user["box_size"] / 2)
                             .bounds())
     else:
-        print("Something is wrong! The variable box_yn should be 0 (extract "
-              "backscatter for pixel coordinates) or 1 ( "
-              "extract mean backscatter for a bounding box).")
+        print("Something is wrong! \n The variable box_yn should be 0 ("
+              "extract backscatter for pixel coordinates) \n or 1 ( "
+              "extract mean backscatter for a bounding box). \n Please run "
+              "setup_ee() before continuing.")
+
+
+
     return geo_list
 
 
@@ -51,13 +113,17 @@ def lc_filter(geo_list):
     geo_list_filt = []
 
     for geo in range(len(geo_list)):
-        lc_value = lc.select("discrete_classification")\
-            .reduceRegion(ee.Reducer.first(), geo_list[geo], 10)\
-            .get("discrete_classification")\
+        lc_value = lc.select("discrete_classification") \
+            .reduceRegion(ee.Reducer.first(), geo_list[geo], 10) \
+            .get("discrete_classification") \
             .getInfo()
 
         if lc_value in valid_ids:
             geo_list_filt.append(geo_list[geo])
+
+    print(str(len(geo_list_filt)) +
+          " out of " + str(len(geo_list)) +
+          " locations remain after applying the land cover filter.")
 
     return geo_list_filt
 
@@ -70,22 +136,22 @@ def get_image_collection(geo_list_filt):
     :return: Dictionary with EE geometry object, descending and ascending
     S-1 image collections as values.
     """
-    imagecoll = {}
+    img_coll = {}
     mode = ee.Filter.eq('instrumentMode', 'IW')
     res = ee.Filter.eq('resolution', 'H')
 
     for geo in range(len(geo_list_filt)):
-        s1 = ee.ImageCollection('COPERNICUS/S1_GRD')\
-            .filter(mode)\
-            .filter(res)\
+        s1 = ee.ImageCollection('COPERNICUS/S1_GRD') \
+            .filter(mode) \
+            .filter(res) \
             .filterBounds(geo_list_filt[geo])
 
         s1_desc = s1.filter(ee.Filter.eq('orbitProperties_pass', 'DESCENDING'))
         s1_asc = s1.filter(ee.Filter.eq('orbitProperties_pass', 'ASCENDING'))
 
-        imagecoll["geo_" + str(geo)] = [geo_list_filt[geo], s1_desc, s1_asc]
+        img_coll["geo_" + str(geo)] = [geo_list_filt[geo], s1_desc, s1_asc]
 
-    return imagecoll
+    return img_coll
 
 
 def get_s1_date(out):
@@ -135,11 +201,13 @@ def simplify(fc):
 
     @author: crisj
     """
+
     def feature2dict(f):
         id = f['id']
         out = f['properties']
         out.update(id=id)
         return out
+
     out = [feature2dict(x) for x in fc['features']]
 
     return out
@@ -163,6 +231,7 @@ def time_series_of_a_region(img_collection, geometry):
     @author: crisj
     Modified by: Marco Wolsza
     """
+
     def _reduce_region(image):
         """
         Spatial aggregation function for a single image and a polygon feature
