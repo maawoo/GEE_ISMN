@@ -5,32 +5,41 @@ import glob
 import shutil
 
 
-def get_sm_files():
+def data_handling(measurement_depth=0.05):
     """
-    bla bla
-    :return:
-    """
-    return [f for f in glob.glob("./data/ISMN/**/*_sm_*.stm", recursive=True)]
-
-
-def filter_files(file_list, measurement_depth):
-    """
-    bla bla
-    :param file_list:
+    bla
     :param measurement_depth:
-    :return:
     """
-    regex = r".+\d{1,2}\.\d+\s+" + re.escape(measurement_depth)
 
-    for file in file_list:
-        checked_file = open(file)
-        first = checked_file.readline()
+    def get_sm_files():
+        files = [f for f in glob.glob("./data/ISMN/**/*_sm_*.stm",
+                                      recursive=True)]
+        return files
 
-        if re.match(regex, first):
-            shutil.copy2(file, './data/ISMN_Filt/')
+    def filter_files(files, depth):
 
-    return [f for f in glob.glob("./data/ISMN_Filt/**/*_sm_*.stm",
-                                 recursive=True)]
+        depth = str(depth)
+        regex = r".+\d{1,2}\.\d+\s+" + re.escape(depth)
+
+        for file in files:
+            checked_file = open(file)
+            first = checked_file.readline()
+
+            if re.match(regex, first):
+                shutil.copy2(file, './data/ISMN_Filt/')
+
+        return [f for f in glob.glob("./data/ISMN_Filt/**/*_sm_*.stm",
+                                     recursive=True)]
+
+    file_list = get_sm_files()
+    file_list_filt = filter_files(file_list, measurement_depth)
+
+    return print(str(len(file_list)) + " ISMN files were found in "
+                                       "\'./data/ISMN/\'. \n"
+                 + str(len(file_list_filt)) + " ISMN files with a "
+                                              "measurement depth of "
+                 + str(measurement_depth) + " were copied to \'./data"
+                                            "/ISMN_Filt/\'")
 
 
 def get_info_from_file(filename):
