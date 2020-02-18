@@ -1,12 +1,27 @@
 import matplotlib.pyplot as plt
 import pandas as pd
 import geopandas as gpd
+from ismn import readers as ismn
 from GEE_ISMN import earthengine as ee
+from GEE_ISMN import setup_pkg as pkg
 
 
-# Initiate GEE & ask for user input
-user_input = ee.setup_ee()
+user_input = pkg.setup_pkg()
 
+#############
+
+test_dict = {}
+test_file = "./data/ISMN_Filt/HOBE_HOBE_1.01_sm_0.000000_0.050000_Decagon" \
+            "-5TE-C_20140401_20191015.stm"
+
+data = ismn.read_data(test_file)
+
+test_dict[data.network + "-" + data.sensor + "-" + data.station] = [
+    data.latitude, data.longitude, data.data]
+
+test_dict["HOBE-Decagon-5TE-C-1.01"]
+
+#############
 
 # Import and process location data
 geo = gpd.read_file('./data/coordinates_2.geojson')
