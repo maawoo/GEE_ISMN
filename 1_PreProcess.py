@@ -4,14 +4,17 @@ from geojson import Point, Feature, FeatureCollection, dump
 from GEE_ISMN import setup_pkg as pkg
 from GEE_ISMN import preprocess as prep
 
-pkg.setup_pkg()
+user_input = pkg.setup_pkg()
 
 prep.data_handling()  # Uses 0.05 as default value to filter for measurement depth
 
 
-## Ab hier Funktion erstellen, die:
+#############################
+## Funktion erstellen, die:
 # 1. Alle .stm Daten aus dem "./data/ISMN_Filt" Order als dataframes importiert
-# 2. Eine dictionary erstellt mit folgendem Aufbau:
+# 2. Eine CSV Datei exportiert mit den Stationen und den jeweiligen
+#    Koordinaten
+# 3. Eine dictionary erstellt mit folgendem Aufbau:
 #           - key       = Name der station
 #           - val_1     = [lat, long]
 #           - val_2     = Dataframe mit den Messungen
