@@ -4,19 +4,6 @@ import re
 import glob
 import shutil
 
-def setup_dir():
-    """
-    bla bla
-    :return:
-    """
-    newDir = './data/ISMN_Filt/'
-
-    if not os.path.exists(newDir):
-        os.mkdir(newDir)
-        print("Directory ", newDir, " created.")
-    else:
-        print("Directory ", newDir, " already exists.")
-
 
 def get_sm_files():
     """

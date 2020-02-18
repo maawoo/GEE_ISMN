@@ -4,58 +4,6 @@ import pandas as pd
 import datetime
 
 
-def setup_ee():
-    """
-    bla bla
-    :return:
-    """
-    try:
-        ee.Initialize()
-    except:
-        ee.Authenticate()
-        ee.Initialize()
-
-    user = {}
-
-    while True:
-        try:
-            user["box_yn"] = \
-                int(input("Do you want to extract... \n backscatter values "
-                          "for the pixel coordinate (input: 0) \n or "
-                          "the mean backscatter value for a box "
-                          "surrounding the pixel coordinate (input: "
-                          "1)?"))
-        except ValueError:
-            print("Sorry, I didn't understand that. \n ")
-            continue
-
-        if user["box_yn"] not in (0, 1):
-            print("Not an appropriate choice. \n ")
-            continue
-
-        elif user["box_yn"] == 1:
-            try:
-                user["box_size"] = int(input("Please enter a box size "
-                                             "(e.g. 20 is equal to a "
-                                             "box of size 20 by 20 "
-                                             "meters):"))
-            except ValueError:
-                print("Sorry, I didn't understand that. \n ")
-                continue
-
-            if user["box_size"] == 0:
-                print("Not an appropriate choice. \n ")
-                continue
-            else:
-                break
-
-        else:
-            user["box_size"] = 0
-            break
-
-    return user
-
-
 def process_geojson(geojson, user_input):
     """Creates a list of Earth Engine (EE) geometry objects from ISMN station
     coordinates.
