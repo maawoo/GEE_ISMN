@@ -1,21 +1,29 @@
 import csv
+import glob
 from geojson import Point, Feature, FeatureCollection, dump
+from GEE_ISMN import setup_pkg as pkg
 from GEE_ISMN import preprocess as prep
 
-prep.setup_dir()
+pkg.setup_pkg()
 
-## List all .stm files
-sm_files = prep.get_sm_files()
+prep.data_handling()  # Uses 0.05 as default value to filter for measurement depth
 
-## Filter soil moisture files by measurement depth
-depth = "0.05"
-sm_files_filt = prep.filter_files(sm_files, depth)
 
+## Ab hier Funktion erstellen, die:
+# 1. Alle .stm Daten aus dem "./data/ISMN_Filt" Order als dataframes importiert
+# 2. Eine dictionary erstellt mit folgendem Aufbau:
+#           - key       = Name der station
+#           - val_1     = [lat, long]
+#           - val_2     = Dataframe mit den Messungen
+#                         (datum-zeit / Messwert / flag?)
 
 coord_1 = []
 coord_2 = []
 station = []
 features = []
+
+sm_files_filt = [f for f in glob.glob("./data/ISMN_Filt/**/*_sm_*.stm",
+                                      recursive=True)]
 
 for i in sm_files_filt:
     checked_file_1 = open(i)
