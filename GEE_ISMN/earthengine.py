@@ -4,76 +4,114 @@ import pandas as pd
 import datetime
 
 
-def process_geojson(geojson, user_input):
-    """Creates a list of Earth Engine (EE) geometry objects from ISMN station
-    coordinates.
+def lc_filter(ismn_dict, user_input, landcover_ids=None):
+    """
+    1. ee_geometries(ismn_dict, user_input):
+    Converts latitude/longitude to Earth Engine geometry objects based on
+    parameters in user_input and adds them to the input dictionary that
+    contains the ISMN data (ismn_dict).
+
+    2. ee_filter(ismn_dict, landcover_ids):
+    The landcover type of each location is checked based on the CGLS-LC100
+    dataset (https://tinyurl.com/cgls-lc100). The input dictionary (
+    ismn_dict) is then filtered based on provided landcover_ids.
+
+    :param ismn_dict: Dictionary that contains ISMN data to be analysed.
+    Output of preprocess.data_import().
 
     :param user_input: Dictionary that was created via user input through
-    the setup_ee() function. Contains the following key / value pairs:
+    the setup_pkg() function. Contains the following key / value pairs:
         - box_yn / either 0 or 1
-            Depending on the value, either point objects (0) or polygons
-            that enclose the station coordinates (1) are returned.
+            Depending on the value, either point objects (0) or polygons (1)
+            with the station coordinate as the midpoint are returned.
         - box_size / any integer > 0
-            Defines the polygon size surrounding the station coordinates and
-            will be used for the extraction of the mean backscatter of the
-            defined region.
-    :param geojson: Imported GeoJSON file that includes ISMN station
-    coordinates.
-    :return: List of EE geometry objects.
+            Defines the polygon size and will be used for the extraction of
+            the mean backscatter of the defined region.
+
+    :param landcover_ids: Landcover ids based on the CGLS-LC100
+    dataset (https://tinyurl.com/cgls-lc100).
+    Default values are:
+        40 = Cultivated and managed vegetation / agriculture
+        60 = Bare / sparse vegetation
+
     """
-    geo_list = []
-    user = user_input
+    if landcover_ids is None:
+        landcover_ids = [40, 60]
 
-    if user["box_yn"] == 0:
-        for i in range(len(geojson)):
-            geo_list.append(ee.Geometry.Point(geojson["geometry"][i].y,
-                                              geojson["geometry"][i].x))
-    elif user["box_yn"] == 1:
-        for i in range(len(geojson)):
-            geo_list.append(ee.Geometry.Point(geojson["geometry"][i].y,
-                                              geojson["geometry"][i].x)
-                            .buffer(user["box_size"] / 2)
-                            .bounds())
-    else:
-        print("Something is wrong! \n The variable box_yn should be 0 ("
-              "extract backscatter for pixel coordinates) \n or 1 ( "
-              "extract mean backscatter for a bounding box). \n Please run "
-              "setup_ee() before continuing.")
+    def ee_geometries(data_dict, input_dict):
 
+        if input_dict["box_yn"] == 0:
+            for key in data_dict.keys():
+                try:
+                    check = type(data_dict[key][3]) == ee.geometry.Geometry
+                    if check == True:
+                        pass
 
+                    else:
+                        print("Something is wrong. I didn't expect an object "
+                              "of type " + str(type(data_dict[key][3])) +
+                              "here.")
+                        raise TypeError
 
-    return geo_list
+                except IndexError:
+                    data_dict[key].append(ee.Geometry.Point(data_dict[key][1],
+                                                            data_dict[key][0]))
 
+        elif input_dict["box_yn"] == 1:
+            for key in data_dict.keys():
+                try:
+                    check = type(data_dict[key][3]) == ee.geometry.Geometry
+                    if check == True:
+                        pass
 
-def lc_filter(geo_list):
-    """Filters a list of Earth Engine (EE) geometry objects by checking the
-    land cover type of each location.
-    Land cover dataset: https://tinyurl.com/cgls-lc100
-    Valid land cover types:
-    40 = Cultivated and managed vegetation / agriculture
-    60 = Bare / sparse vegetation
+                    else:
+                        print("Something is wrong. I didn't expect an object "
+                              "of type " + str(type(data_dict[key][3])) +
+                              "here.")
+                        raise TypeError
 
-    :param geo_list: List of EE geometry objects.
-    :return: Filtered list of EE geometry objects.
-    """
-    lc = ee.ImageCollection("COPERNICUS/Landcover/100m/Proba-V/Global").first()
-    valid_ids = [40, 60]
-    geo_list_filt = []
+                except IndexError:
+                    data_dict[key].append(ee.Geometry.Point(data_dict[key][1],
+                                                            data_dict[key][0])
+                                          .buffer(input_dict["box_size"] / 2)
+                                          .bounds())
 
-    for geo in range(len(geo_list)):
-        lc_value = lc.select("discrete_classification") \
-            .reduceRegion(ee.Reducer.first(), geo_list[geo], 10) \
-            .get("discrete_classification") \
-            .getInfo()
+        else:
+            print("Something is wrong! \n The variable box_yn should be 0 ("
+                  "extract backscatter for pixel coordinates) \n or 1 ( "
+                  "extract mean backscatter for a bounding box). \n Please "
+                  "run setup_pkg() again before continuing!")
 
-        if lc_value in valid_ids:
-            geo_list_filt.append(geo_list[geo])
+        return data_dict
 
-    print(str(len(geo_list_filt)) +
-          " out of " + str(len(geo_list)) +
-          " locations remain after applying the land cover filter.")
+    def ee_filter(data_dict, lc_ids):
 
-    return geo_list_filt
+        new_dict = {}
+        lc = ee.ImageCollection(
+            "COPERNICUS/Landcover/100m/Proba-V/Global").first()
+        valid_ids = lc_ids
+
+        for key in data_dict.keys():
+            lc_value = lc.select("discrete_classification") \
+                .reduceRegion(ee.Reducer.first(), data_dict[key][3], 10) \
+                .get("discrete_classification") \
+                .getInfo()
+
+            if lc_value in valid_ids:
+                new_dict[key] = data_dict[key]
+
+            print("Landcover ID: " + str(lc_value))
+
+        print(str(len(new_dict.items())) +
+              " out of " + str(len(data_dict.items())) +
+              " locations remain after applying the land cover filter.")
+
+        return new_dict
+
+    ismn_dict_edit = ee_geometries(ismn_dict, user_input)
+    ismn_dict_filt = ee_filter(ismn_dict_edit, landcover_ids)
+
+    return ismn_dict_filt
 
 
 def get_image_collection(geo_list_filt):
