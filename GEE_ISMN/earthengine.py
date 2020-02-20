@@ -114,30 +114,32 @@ def lc_filter(ismn_dict, user_input, landcover_ids=None):
     return ismn_dict_filt
 
 
-def get_image_collection(geo_list_filt):
+def get_image_collection(ismn_dict_filt):
     """Gets the available Sentinel-1 image collection (ascending and
-    descending) for each Earth Engine (EE) geometry object of a list.
+    descending) for each Earth Engine geometry object of a dictionary.
 
-    :param geo_list_filt: Filtered list of EE geometry objects.
-    :return: Dictionary with EE geometry object, descending and ascending
-    S-1 image collections as values.
+    :param ismn_dict_filt: Output dictionary of lc_filter(). Contains
+    Earth Engine geometry objects that are used to retrieve the S-1 image
+    collections.
+    :return: Dictionary with added S-1 image collections.
     """
-    img_coll = {}
+    data_dict = ismn_dict_filt
     mode = ee.Filter.eq('instrumentMode', 'IW')
     res = ee.Filter.eq('resolution', 'H')
 
-    for geo in range(len(geo_list_filt)):
+    for key in data_dict.keys():
         s1 = ee.ImageCollection('COPERNICUS/S1_GRD') \
             .filter(mode) \
             .filter(res) \
-            .filterBounds(geo_list_filt[geo])
+            .filterBounds(data_dict[key][3])
 
         s1_desc = s1.filter(ee.Filter.eq('orbitProperties_pass', 'DESCENDING'))
         s1_asc = s1.filter(ee.Filter.eq('orbitProperties_pass', 'ASCENDING'))
 
-        img_coll["geo_" + str(geo)] = [geo_list_filt[geo], s1_desc, s1_asc]
+        data_dict[key].append(s1_desc)
+        data_dict[key].append(s1_asc)
 
-    return img_coll
+    return data_dict
 
 
 def get_s1_date(out):
