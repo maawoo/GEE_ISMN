@@ -18,16 +18,16 @@ def setup_pkg():
 
     :return: Dirctionary with user input generated through setup_ee().
     """
-    user_input = {}
+    input_dict = {}
 
     def setup_dir():
         data_dir = './data/ISMN/'
         new_dir = './data/ISMN_Filt/'
 
         if not os.path.exists(data_dir):
-            raise IOError('Path does not exist! \n Please make sure that '
-                          'you store your ISMN files in the '
-                          'subdirectory: \n %s !' % data_dir)
+            raise IndexError('Path does not exist! \n Please make sure that '
+                             'you store your ISMN files in the '
+                             'subdirectory: \n %s !' % data_dir)
 
         if not os.path.exists(new_dir):
             os.mkdir(new_dir)
@@ -35,7 +35,7 @@ def setup_pkg():
         else:
             print("Directory ", new_dir, " already exists.")
 
-    def setup_ee(user_input):
+    def setup_ee(input_dict):
 
         try:
             ee.Initialize()
@@ -45,7 +45,7 @@ def setup_pkg():
 
         while True:
             try:
-                user_input["box_yn"] = \
+                input_dict["box_yn"] = \
                     int(input(
                         "Do you want to extract... \n backscatter values "
                         "for the pixel coordinate (input: 0) \n or "
@@ -56,13 +56,13 @@ def setup_pkg():
                 print("Sorry, I didn't understand that. \n ")
                 continue
 
-            if user_input["box_yn"] not in (0, 1):
+            if input_dict["box_yn"] not in (0, 1):
                 print("Not an appropriate choice. \n ")
                 continue
 
-            elif user_input["box_yn"] == 1:
+            elif input_dict["box_yn"] == 1:
                 try:
-                    user_input["box_size"] = int(input("Please enter a box "
+                    input_dict["box_size"] = int(input("Please enter a box "
                                                        "size (e.g. 20 is "
                                                        "equal to a box of "
                                                        "size 20 by 20 "
@@ -71,18 +71,18 @@ def setup_pkg():
                     print("Sorry, I didn't understand that. \n ")
                     continue
 
-                if user_input["box_size"] == 0:
+                if input_dict["box_size"] == 0:
                     print("Not an appropriate choice. \n ")
                     continue
                 else:
                     break
             else:
-                user_input["box_size"] = 0
+                input_dict["box_size"] = 0
                 break
 
-        return user_input
+        return input_dict
 
     setup_dir()
-    setup_ee(user_input)
+    input_dict = setup_ee(input_dict)
 
-    return user_input
+    return input_dict
