@@ -1,10 +1,10 @@
-import matplotlib.pyplot as plt
-import pandas as pd
-import geopandas as gpd
-import ee
 from ismn import readers as ismn
 from GEE_ISMN import setup_pkg as pkg
 from GEE_ISMN import earthengine as earth
+# import matplotlib.pyplot as plt
+# import pandas as pd
+# import geopandas as gpd
+# import ee
 
 user_input = pkg.setup_pkg()
 
@@ -27,6 +27,44 @@ test_dict[data2.network + "-" + data2.sensor + "-" + data2.station] = [
 test_dict_2 = earth.lc_filter(test_dict, user_input)
 
 test_dict_3 = earth.get_s1_backscatter(test_dict_2)
+timeseries_s1 = test_dict_3['RSMN-5TM-Dumbraveni'][6]
+timeseries_sm = test_dict_3['RSMN-5TM-Dumbraveni'][2]
+i = 1
+copy_sm = []
+plotdata = []
+for timestamp in timeseries_sm.index:
+    copy_sm.append(timestamp)
+
+for timestamp in timeseries_s1.index:
+    sm_series = None
+    result = None
+    for sm_timestamp_index in range(len(copy_sm)):
+        loc = copy_sm[sm_timestamp_index].tz_localize(None)
+        if loc > timestamp:
+            result = sm_series
+            break
+        sm_series = sm_timestamp_index
+
+    if result is not None:
+        record = {
+            "s1": {
+                "t": timestamp,
+                "VH": timeseries_s1.at[timestamp, "VH"],
+                "VV": timeseries_s1.at[timestamp, "VV"]
+            },
+            "sm": {
+                "t": copy_sm[result].tz_localize(None),
+                "sm": timeseries_sm.at[copy_sm[result], "soil moisture"]
+            }
+        }
+        plotdata.append(record)
+        copy_sm = copy_sm[result:]
+#    print(timestamp)
+#    i = i + 1
+#    if i == 10:
+#        break
+
+
 
 #############
 
