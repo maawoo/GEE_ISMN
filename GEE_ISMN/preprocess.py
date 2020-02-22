@@ -3,6 +3,8 @@ import io
 import re
 import glob
 import shutil
+import csv
+from ismn import readers as ismn
 
 
 def data_handling(measurement_depth=0.05):
@@ -56,3 +58,33 @@ def get_info_from_file(filename):
     filename_elements = filen.split('_')
 
     return header_elements, filename_elements
+
+
+def data_import(sm_files):
+    """
+
+    Args:
+        sm_files:
+
+    Returns:
+
+    """
+    dict_ismn = {}
+    long = []
+    lat = []
+    station = []
+    for i in sm_files:
+        data = ismn.read_data(i)
+        header_elements, filename_elements = get_info_from_file(i)
+        dict_ismn[header_elements[1] + "-" + header_elements[2] + "-" + header_elements[8]] = \
+            [header_elements[3], header_elements[4], data.data]
+        long.append(header_elements[3])
+        lat.append(header_elements[4])
+        station.append(header_elements[1] + "-" + header_elements[2] + "-" + header_elements[8])
+
+    with open('stations.csv', 'w', newline='') as csvfile:
+        filewriter = csv.writer(csvfile, delimiter=',')
+        filewriter.writerow(station)
+        filewriter.writerow(long)
+        filewriter.writerow(lat)
+    return dict_ismn
