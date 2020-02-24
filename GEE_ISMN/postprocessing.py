@@ -1,3 +1,5 @@
+import pandas as pd
+
 # data_filter(data_dict, filter=None)
 #   - filter:
 #       - (Default) filter=None: Nur die ISMN-Messung unmittelbar
@@ -6,3 +8,71 @@
 #       (müssen nur überlegen was mehr Sinn macht. Entweder zB 3 Messungen vor
 #       S1-Aufnahme oder villt 2 Messungen davor und 1 danach?)
 #   - Output: Neuer dataframe in der dict (time / ismn_data / s1_data)
+
+
+def filter_s1_desc(data_dict):
+
+    copy_sm = []
+    plotdata = []
+    for key in data_dict.keys():
+        timeseries_s1 = data_dict[key][6]
+        timeseries_sm = data_dict[key][2]
+        for timestamp in timeseries_sm.index:
+            copy_sm.append(timestamp)
+
+        for timestamp in timeseries_s1.index:
+            sm_series = None
+            result = None
+            for sm_timestamp_index in range(len(copy_sm)):
+                loc = copy_sm[sm_timestamp_index].tz_localize(None)
+                if loc > timestamp:
+                    result = sm_series
+                    break
+                sm_series = sm_timestamp_index
+
+            if result is not None:
+                record = {
+                    "t_s1_desc": timestamp,
+                    "VH_desc": timeseries_s1.at[timestamp, "VH"],
+                    "VV_desc": timeseries_s1.at[timestamp, "VV"],
+                    "t_sm": copy_sm[result].tz_localize(None),
+                    "sm": timeseries_sm.at[copy_sm[result], "soil moisture"]
+                }
+                plotdata.append(record)
+                copy_sm = copy_sm[result:]
+
+        data_dict[key].append(pd.DataFrame(plotdata))
+
+
+def filter_s1_asc(data_dict):
+    copy_sm = []
+    plotdata = []
+    for key in data_dict.keys():
+        timeseries_s1 = data_dict[key][7]
+        timeseries_sm = data_dict[key][2]
+        for timestamp in timeseries_sm.index:
+            copy_sm.append(timestamp)
+
+        for timestamp in timeseries_s1.index:
+            sm_series = None
+            result = None
+            for sm_timestamp_index in range(len(copy_sm)):
+                loc = copy_sm[sm_timestamp_index].tz_localize(None)
+                if loc > timestamp:
+                    result = sm_series
+                    break
+                sm_series = sm_timestamp_index
+
+            if result is not None:
+                record = {
+                    "t_s1_asc": timestamp,
+                    "VH_asc": timeseries_s1.at[timestamp, "VH"],
+                    "VV_asc": timeseries_s1.at[timestamp, "VV"],
+                    "t_sm": copy_sm[result].tz_localize(None),
+                    "sm": timeseries_sm.at[copy_sm[result], "soil moisture"]
+                }
+                plotdata.append(record)
+                copy_sm = copy_sm[result:]
+
+        data_dict[key].append(pd.DataFrame(plotdata))
+
