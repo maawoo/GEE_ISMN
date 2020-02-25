@@ -47,7 +47,7 @@ def data_import():
         station.append(header_elements[1] + "-" + header_elements[2] + "-" +
                        header_elements[8])
 
-    with open('stations.csv', 'w', newline='') as csvfile:
+    with open('./data/stations.csv', 'w', newline='') as csvfile:
         filewriter = csv.writer(csvfile, delimiter=',')
         filewriter.writerow(station)
         filewriter.writerow(long)
