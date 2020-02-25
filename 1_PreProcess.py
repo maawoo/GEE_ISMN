@@ -1,26 +1,28 @@
-import glob
 from GEE_ISMN import setup_pkg as pkg
 from GEE_ISMN import preprocess as prep
+from GEE_ISMN import earthengine as earth
+from GEE_ISMN import postprocess as post
+from GEE_ISMN import visualization as vis
 
+## Setup
 user_input = pkg.setup_pkg()
 
-prep.data_handling()  # Uses 0.05 as default value to filter for measurement depth
+
+## Preprocess
+prep.data_handling()
+dict_ISMN = prep.data_import()
 
 
-#############################
-## Funktion erstellen, die:
-# 1. Alle .stm Daten aus dem "./data/ISMN_Filt" Order als dataframes importiert
-# 2. Eine CSV Datei exportiert mit den Stationen und den jeweiligen
-#    Koordinaten
-# 3. Eine dictionary erstellt mit folgendem Aufbau:
-#           - key       = Name der station
-#           - val_1     = [lat, long]
-#           - val_2     = Dataframe mit den Messungen
-#                         (datum-zeit / Messwert / flag?)
+## GEE magic
+earth.lc_filter(dict_ISMN, user_input)
+earth.get_s1_backscatter(dict_ISMN)
 
 
-sm_files_filt = [f for f in glob.glob("./data/ISMN_Filt/**/*_sm_*.stm", recursive=True)]
-
-dict_ISMN = prep.data_import(sm_files_filt)
+## Postprocess
 
 
+## Visualization
+station = 'RSMN-5TM-Dumbraveni'
+
+vis.show_map(dict_ISMN, station)
+img = vis.show_s1(dict_ISMN, station, "2017-06-26")
