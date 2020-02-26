@@ -1,6 +1,7 @@
 import pandas as pd
 import numpy as np
 
+
 # data_filter(data_dict, filter=None)
 #   - filter:
 #       - (Default) filter=None: Nur die ISMN-Messung unmittelbar
@@ -43,16 +44,15 @@ def filter_s1_desc(data_dict):
             if result is not None:
                 record = {
                     "t_s1_desc": timestamp,
-                    "VH_desc": timeseries_s1.at[timestamp, "VH"][0]\
-                        if isinstance(timeseries_s1.at[timestamp, "VH"], np.ndarray)\
+                    "VH_desc": timeseries_s1.at[timestamp, "VH"][0] \
+                        if isinstance(timeseries_s1.at[timestamp, "VH"], np.ndarray) \
                         else timeseries_s1.at[timestamp, "VH"],
-                    "VV_desc": timeseries_s1.at[timestamp, "VV"][0]\
-                        if isinstance(timeseries_s1.at[timestamp, "VV"], np.ndarray)\
+                    "VV_desc": timeseries_s1.at[timestamp, "VV"][0] \
+                        if isinstance(timeseries_s1.at[timestamp, "VV"], np.ndarray) \
                         else timeseries_s1.at[timestamp, "VV"],
                     "t_sm": copy_sm[result].tz_localize(None),
                     "sm": timeseries_sm.at[copy_sm[result], "soil moisture"]
                 }
-                print(type(record["VH_desc"]))
                 plotdata.append(record)
                 copy_sm = copy_sm[result:]
         data_dict[key].append(pd.DataFrame(data=plotdata, dtype=np.float))
@@ -80,11 +80,11 @@ def filter_s1_asc(data_dict):
             if result is not None:
                 record = {
                     "t_s1_asc": timestamp,
-                    "VH_asc": timeseries_s1.at[timestamp, "VH"][0]\
-                        if isinstance(timeseries_s1.at[timestamp, "VH"], np.ndarray)\
+                    "VH_asc": timeseries_s1.at[timestamp, "VH"][0] \
+                        if isinstance(timeseries_s1.at[timestamp, "VH"], np.ndarray) \
                         else timeseries_s1.at[timestamp, "VH"],
-                    "VV_asc": timeseries_s1.at[timestamp, "VV"][0]\
-                        if isinstance(timeseries_s1.at[timestamp, "VV"], np.ndarray)\
+                    "VV_asc": timeseries_s1.at[timestamp, "VV"][0] \
+                        if isinstance(timeseries_s1.at[timestamp, "VV"], np.ndarray) \
                         else timeseries_s1.at[timestamp, "VV"],
                     "t_sm": copy_sm[result].tz_localize(None),
                     "sm": timeseries_sm.at[copy_sm[result], "soil moisture"]
@@ -93,4 +93,3 @@ def filter_s1_asc(data_dict):
                 copy_sm = copy_sm[result:]
 
         data_dict[key].append(pd.DataFrame(data=plotdata, dtype=np.float))
-
