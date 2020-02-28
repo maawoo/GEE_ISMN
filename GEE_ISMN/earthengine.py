@@ -3,6 +3,7 @@ import copy
 import numpy as np
 import pandas as pd
 import datetime
+import csv
 
 
 def lc_filter(data_dict, input_dict, landcover_ids=None):
@@ -52,6 +53,99 @@ def lc_filter(data_dict, input_dict, landcover_ids=None):
 
     data_dict_edit = _ee_geometries(data_dict_copy, input_dict)
     data_dict_filt = _ee_filter(data_dict_edit, landcover_ids)
+
+    return data_dict_filt
+
+
+def _ee_geometries(data_dict, input_dict):
+    """Takes latitude & longitude from the the dictionary that
+    contains the ISMN data (data_dict) and converts them to GEE geometry
+    objects based on parameters in input_dict.
+
+    For parameter description see: lc_filter()
+    :return: data_dict with added EE geometry objects.
+    """
+    data_dict_copy = copy.deepcopy(data_dict)
+
+    if input_dict["box_yn"] == 0:
+        for key in data_dict_copy.keys():
+            try:
+                check = type(data_dict_copy[key][3]) == ee.geometry.Geometry
+                if check:
+                    pass
+                else:
+                    raise TypeError("Something is wrong. I didn't "
+                                    "expect an object of type\n "
+                                    + str(type(data_dict_copy[key][3])) +
+                                    "here.")
+
+            except IndexError:  # Nothing here, which is good!
+                data_dict_copy[key].append(
+                    ee.Geometry.Point(float(data_dict_copy[key][1]),
+                                      float(data_dict_copy[key][0])))
+
+    elif input_dict["box_yn"] == 1:
+        for key in data_dict_copy.keys():
+            try:
+                check = type(data_dict_copy[key][3]) == ee.geometry.Geometry
+                if check:
+                    pass
+                else:
+                    raise TypeError("Something is wrong. I didn't expect "
+                                    "an object of type\n "
+                                    + str(type(data_dict_copy[key][3]))
+                                    + "here.")
+
+            except IndexError:  # Nothing here, which is good!
+                data_dict_copy[key].append(
+                    ee.Geometry.Point(float(data_dict_copy[key][1]),
+                                      float(data_dict_copy[key][0]))
+                        .buffer(input_dict["box_size"] / 2)
+                        .bounds())
+    else:
+        raise ValueError("Something is wrong! \n The variable box_yn should be"
+                         " 0 (extract backscatter for pixel coordinates) \n "
+                         "or 1 (extract mean backscatter for a bounding box). "
+                         "\n Please run setup_pkg() again before continuing!")
+
+    return data_dict_copy
+
+
+def _ee_filter(data_dict, landcover_ids):
+    """The landcover type of each location is checked based on the
+    CGLS-LC100 dataset (https://tinyurl.com/cgls-lc100). The input
+    dictionary ( data_dict) is then filtered based on provided landcover IDs
+    (landcover_ids).
+
+    For parameter description see: lc_filter()
+    :return: Filtered version of data_dict.
+    """
+    data_dict_copy = copy.deepcopy(data_dict)
+    valid_ids = landcover_ids
+    data_dict_filt = {}
+    lc_values = []
+
+    lc = ee.ImageCollection(
+        "COPERNICUS/Landcover/100m/Proba-V/Global").first()
+
+    for key in data_dict_copy.keys():
+        lc_val = lc.select("discrete_classification") \
+            .reduceRegion(ee.Reducer.first(), data_dict_copy[key][3], 10) \
+            .get("discrete_classification") \
+            .getInfo()
+
+        if lc_val in valid_ids:
+            data_dict_filt[key] = data_dict_copy[key]
+
+        lc_values.append(lc_val)
+
+    with open('./data/stations.csv', 'a', newline='') as csvfile:
+        filewriter = csv.writer(csvfile, delimiter=',')
+        filewriter.writerow(lc_values)
+
+    print(str(len(data_dict_filt.items())) +
+          " out of " + str(len(data_dict_copy.items())) +
+          " locations remain after applying the land cover filter.")
 
     return data_dict_filt
 
@@ -136,92 +230,6 @@ def get_s1_backscatter(data_dict_filt):
                   + str(key))
 
     return data_dict
-
-
-def _ee_geometries(data_dict, input_dict):
-    """Takes latitude & longitude from the the dictionary that
-    contains the ISMN data (data_dict) and converts them to GEE geometry
-    objects based on parameters in input_dict.
-
-    For parameter description see: lc_filter()
-    :return: data_dict with added EE geometry objects.
-    """
-    data_dict_copy = copy.deepcopy(data_dict)
-
-    if input_dict["box_yn"] == 0:
-        for key in data_dict_copy.keys():
-            try:
-                check = type(data_dict_copy[key][3]) == ee.geometry.Geometry
-                if check:
-                    pass
-                else:
-                    raise TypeError("Something is wrong. I didn't "
-                                    "expect an object of type\n "
-                                    + str(type(data_dict_copy[key][3])) +
-                                    "here.")
-
-            except IndexError:  # Nothing here, which is good!
-                data_dict_copy[key].append(
-                    ee.Geometry.Point(float(data_dict_copy[key][1]),
-                                      float(data_dict_copy[key][0])))
-
-    elif input_dict["box_yn"] == 1:
-        for key in data_dict_copy.keys():
-            try:
-                check = type(data_dict_copy[key][3]) == ee.geometry.Geometry
-                if check:
-                    pass
-                else:
-                    raise TypeError("Something is wrong. I didn't expect "
-                                    "an object of type\n "
-                                    + str(type(data_dict_copy[key][3]))
-                                    + "here.")
-
-            except IndexError:  # Nothing here, which is good!
-                data_dict_copy[key].append(
-                    ee.Geometry.Point(float(data_dict_copy[key][1]),
-                                      float(data_dict_copy[key][0]))
-                        .buffer(input_dict["box_size"] / 2)
-                        .bounds())
-    else:
-        raise ValueError("Something is wrong! \n The variable box_yn should be"
-                         " 0 (extract backscatter for pixel coordinates) \n "
-                         "or 1 (extract mean backscatter for a bounding box). "
-                         "\n Please run setup_pkg() again before continuing!")
-
-    return data_dict_copy
-
-
-def _ee_filter(data_dict, landcover_ids):
-    """The landcover type of each location is checked based on the
-    CGLS-LC100 dataset (https://tinyurl.com/cgls-lc100). The input
-    dictionary ( data_dict) is then filtered based on provided landcover IDs
-    (landcover_ids).
-
-    For parameter description see: lc_filter()
-    :return: Filtered version of data_dict.
-    """
-    data_dict_copy = copy.deepcopy(data_dict)
-    valid_ids = landcover_ids
-    data_dict_filt = {}
-
-    lc = ee.ImageCollection(
-        "COPERNICUS/Landcover/100m/Proba-V/Global").first()
-
-    for key in data_dict_copy.keys():
-        lc_value = lc.select("discrete_classification") \
-            .reduceRegion(ee.Reducer.first(), data_dict_copy[key][3], 10) \
-            .get("discrete_classification") \
-            .getInfo()
-
-        if lc_value in valid_ids:
-            data_dict_filt[key] = data_dict_copy[key]
-
-    print(str(len(data_dict_filt.items())) +
-          " out of " + str(len(data_dict_copy.items())) +
-          " locations remain after applying the land cover filter.")
-
-    return data_dict_filt
 
 
 def _get_image_collection(data_dict_filt):
