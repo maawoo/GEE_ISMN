@@ -31,6 +31,8 @@ def lc_filter(data_dict, input_dict, landcover_ids=None):
         40 = Cultivated and managed vegetation / agriculture
         60 = Bare / sparse vegetation
     :type landcover_ids: single int or list of int
+
+    :return: The filtered version of data_dict
     """
     data_dict_copy = copy.deepcopy(data_dict)
 
@@ -58,7 +60,7 @@ def get_s1_backscatter(data_dict_filt):
     """For each key (= ISMN station) of the input dictionary, this function
     gets all available Sentinel-1 scenes (descending & ascending) and adds
     them to the dictionary as image collections.
-    Afterwards backscatter timeseries are generated for both image
+    Afterwards backscatter timeseries are extracted for both image
     collections and added to the dictionary as pandas dataframes.
 
     :param data_dict_filt: Output dictionary of lc_filter(), which at this
@@ -81,29 +83,57 @@ def get_s1_backscatter(data_dict_filt):
             geo_type = data_dict[key][3].getInfo()['type']
 
             if geo_type == 'Point':
-                s1_data_desc = _time_series_of_a_point(data_dict[key][4],
-                                                       data_dict[key][3])
-                s1_data_asc = _time_series_of_a_point(data_dict[key][5],
-                                                      data_dict[key][3])
-                data_dict[key].append(s1_data_desc)
-                data_dict[key].append(s1_data_asc)
+
+                if data_dict[key][4].size().getInfo() > 0:
+                    s1_data_desc = _time_series_of_a_point(data_dict[key][4],
+                                                           data_dict[key][3])
+                    data_dict[key].append(s1_data_desc)
+                else:
+                    print(str(key) + ": Image collection of the descending "
+                                     "track is empty.\n No backscatter "
+                                     "timeseries was extracted.")
+                    data_dict[key].append(None)
+
+                if data_dict[key][5].size().getInfo() > 0:
+                    s1_data_asc = _time_series_of_a_point(data_dict[key][5],
+                                                          data_dict[key][3])
+                    data_dict[key].append(s1_data_asc)
+                else:
+                    print(str(key) + ": Image collection of the ascending "
+                                     "track is empty.\n No backscatter "
+                                     "timeseries was extracted.")
+                    data_dict[key].append(None)
 
             elif geo_type == 'Polygon':
-                s1_data_desc = _time_series_of_a_region(data_dict[key][4],
-                                                        data_dict[key][3])
-                s1_data_asc = _time_series_of_a_region(data_dict[key][5],
-                                                       data_dict[key][3])
-                data_dict[key].append(s1_data_desc)
-                data_dict[key].append(s1_data_asc)
+
+                if data_dict[key][4].size().getInfo() > 0:
+                    s1_data_desc = _time_series_of_a_region(data_dict[key][4],
+                                                            data_dict[key][3])
+                    data_dict[key].append(s1_data_desc)
+                else:
+                    print(str(key) + ": Image collection of the descending "
+                                     "track is empty.\n No backscatter "
+                                     "timeseries was extracted.")
+                    data_dict[key].append(None)
+
+                if data_dict[key][5].size().getInfo() > 0:
+                    s1_data_asc = _time_series_of_a_region(data_dict[key][5],
+                                                           data_dict[key][3])
+                    data_dict[key].append(s1_data_asc)
+                else:
+                    print(str(key) + ": Image collection of the ascending "
+                                     "track is empty.\n No backscatter "
+                                     "timeseries was extracted.")
+                    data_dict[key].append(None)
 
             else:
-                raise ValueError(str(data_dict[key])
+                raise ValueError(str(key)
                                  + " - I didn't expect an object of type "
                                  + str(geo_type) + "here.")
 
         except IndexError:
             print("A GEE geometry object is missing for: "
-                  + str(data_dict[key]))
+                  + str(key))
 
     return data_dict
 
@@ -132,8 +162,8 @@ def _ee_geometries(data_dict, input_dict):
 
             except IndexError:  # Nothing here, which is good!
                 data_dict_copy[key].append(
-                    ee.Geometry.Point(data_dict_copy[key][1],
-                                      data_dict_copy[key][0]))
+                    ee.Geometry.Point(float(data_dict_copy[key][1]),
+                                      float(data_dict_copy[key][0])))
 
     elif input_dict["box_yn"] == 1:
         for key in data_dict_copy.keys():
@@ -149,10 +179,10 @@ def _ee_geometries(data_dict, input_dict):
 
             except IndexError:  # Nothing here, which is good!
                 data_dict_copy[key].append(
-                    ee.Geometry.Point(data_dict_copy[key][1],
-                                      data_dict_copy[key][0])
-                    .buffer(input_dict["box_size"] / 2)
-                    .bounds())
+                    ee.Geometry.Point(float(data_dict_copy[key][1]),
+                                      float(data_dict_copy[key][0]))
+                        .buffer(input_dict["box_size"] / 2)
+                        .bounds())
     else:
         raise ValueError("Something is wrong! \n The variable box_yn should be"
                          " 0 (extract backscatter for pixel coordinates) \n "
@@ -207,13 +237,15 @@ def _get_image_collection(data_dict_filt):
     """
     data_dict = copy.deepcopy(data_dict_filt)
 
+    pol_vv = ee.Filter.listContains('transmitterReceiverPolarisation', 'VV')
+    pol_vh = ee.Filter.listContains('transmitterReceiverPolarisation', 'VH')
     mode = ee.Filter.eq('instrumentMode', 'IW')
-    res = ee.Filter.eq('resolution', 'H')
 
     for key in data_dict.keys():
         s1 = ee.ImageCollection('COPERNICUS/S1_GRD') \
+            .filter(pol_vv) \
+            .filter(pol_vh) \
             .filter(mode) \
-            .filter(res) \
             .filterBounds(data_dict[key][3])
 
         s1_desc = s1.filter(
