@@ -7,11 +7,15 @@ from ismn import readers as ismn
 
 def data_handling(measurement_depth=0.05):
     """
-    bla
-    :param measurement_depth:
+    This function uses the function "filter_files" and generates a list of
+    the filtered files in "ISMN_Filt"
+    :param measurement_depth: variable containing required the maximum depth of the ISMN Data
+    :type measurement_depth: int
+    :return
+
     """
     file_list = [f for f in glob.glob("./data/ISMN/**/*_sm_*.stm",
-                                  recursive=True)]
+                                      recursive=True)]
 
     file_list_filt = _filter_files(file_list, measurement_depth)
 
@@ -25,8 +29,13 @@ def data_handling(measurement_depth=0.05):
 
 def data_import():
     """
+    This function creates an dictionary which contains the longitude,
+    latitude and the stationname of the remaining ISMN Data in "ISMN_Filt".
+    Also it creates an csv file which contains the same info to
+    get an overview of the data.
 
-    :return:
+    :return: a dictionary which contains longitude, latitude
+            and stationname of filtered IMSN Files
     """
     sm_files = [f for f in glob.glob("./data/ISMN_Filt/**/*_sm_*.stm",
                                      recursive=True)]
@@ -58,10 +67,13 @@ def data_import():
 
 def _filter_files(files, depth):
     """
-
-    :param files:
-    :param depth:
-    :return:
+    This function uses a regular expression for filtering the ISMN Files by
+    required maximum depth and copies them in the new created folder "ISMN_Filt"
+    :param files: list of all ISMN Filenames.
+    :type files: list
+    :param depth: variable containing required the maximum depth of the ISMN Data
+    :type depth: int
+    :return: a list of the Filenames in "ISMN_Filt"
     """
     depth = str(depth)
     regex = r".+\d{1,2}\.\d+\s+" + re.escape(depth)

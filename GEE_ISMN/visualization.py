@@ -1,5 +1,5 @@
 import ee
-#import folium
+import folium
 import webbrowser
 import matplotlib.pyplot as plt
 from pandas.plotting import register_matplotlib_converters
@@ -159,7 +159,25 @@ def _date_dist(img_coll, date):
 
 
 def plot_data(data_dict, station_name, orbit=None, pol=None):
+    """ This function plots the ISMN Time Series against the
+    Sentinel-1 Time Series.
+        :param data_dict: dictionary which contains a Dataframe
+        containing:
+            - Sentinel-1 Timestamps
+            - Sentinel-1 Backscatter Values (VH/VV)
+            - ISMN Timestamps
+            - ISMN Soilmoisture Values
+        :type data_dict: dictionary
 
+        :param station_name: Name of a ISMN station.
+        :type station_name: String
+
+        :param pol: Polarisation; either "VV" or "VH"
+        :type pol: String
+
+        :param orbit: Orbit; either "desc" (= descending) or "asc" (= ascending)
+        :type orbit: String
+    """
     global plot_label, plot_pol, plot_title
     station = station_name
 
@@ -194,7 +212,6 @@ def plot_data(data_dict, station_name, orbit=None, pol=None):
             plot_pol = data_dict[station][8].VH_desc
             plot_label = "VH - Descending"
             plot_title = "ISMN Soil Moisture against Sentinel-1 VH (Descending Orbit)"
-
     elif orbit == "asc":
         plot_date = data_dict[station][9].t_s1_asc
         plot_soil = data_dict[station][9].sm

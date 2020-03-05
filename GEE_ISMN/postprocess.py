@@ -5,11 +5,25 @@ import numpy as np
 def filter_s1(data_dict):
 
     def filter_s1_desc(data_dict_desc):
-        """ lazy evaluation: if the entry in VH is an array set it as the first value of that array, set the normal value
-            :param data_dict_desc:
+        """ This function filters the ISMN data by comparing
+        time of recording of ISMN and Sentinel-1 data from the
+        Descending Orbit. Only ISMN data which were collected
+        right before the Sentinel-1 data should be used.
+        Also the function checks for double Sentinel-1 timestamps.
+        In case of doubled Sentinel-1 dcenes for one timestamp,
+        the first one will be choosen.
+            :param data_dict_desc: dictionary which contains the following values:
+                - Sentinel-1 timestamps of descending orbit
+                - Sentinel-1 backscatter values (VH/VV) of descending orbit
+                - ISMN timestamps
+                - ISMN soilmoisture values
+
             :type data_dict_desc: dictionary
 
-            :return:
+            :return: a dataframe containing the Sentinel-1 Timestamps
+            (t_s1_desc) and backscatter values (VH_desc & VV_desc) for the
+            descending Orbit and the assigned ISMN soilm moisture values (sm)
+            and timestamps (t_sm)
             """
         copy_sm = []
         plotdata = []
@@ -50,6 +64,26 @@ def filter_s1(data_dict):
             data_dict_desc[key].append(pd.DataFrame(data=plotdata, dtype=np.float))
 
     def filter_s1_asc(data_dict_asc):
+        """ This function filters the ISMN Data by comparing
+            time of recording of ISMN and Sentinel-1 data from the
+            Ascending Orbit. Only ISMN Data which were collected
+            right before the Sentinel-1 Data should be used.
+            Also the function checks for double Sentinel-1 timestamps.
+            In case of doubled Sentinel-1 Scenes for one timestamp,
+            the first one will be choosen.
+                :param data_dict_asc: dictionary which contains the following values:
+                    - Sentinel-1 Timestamps of Ascending Orbit
+                    - Sentinel-1 Backscatter Values (VH/VV) of Ascending Orbit
+                    - ISMN Timestamps
+                    - ISMN Soilmoisture Values
+
+                :type data_dict_asc: dictionary
+
+                :return: a Dataframe containing the Sentinel-1 Timestamps
+                (t_s1_asc) and Backscatter Values (VH_asc & VV_asc) for the
+                descending Orbit and the assigned ISMN Soilmoisture Values (sm)
+                and Timestamps (t_sm)
+                """
         copy_sm = []
         plotdata = []
         for key in data_dict_asc.keys():
