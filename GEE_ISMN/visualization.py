@@ -172,7 +172,7 @@ def plot_data(data_dict, station_name, orbit=None, pol=None):
         :param station_name: Name of a ISMN station.
         :type station_name: String
 
-        :param pol: Polarisation; either "VV" or "VH"
+        :param pol: Polarization; either "VV" or "VH"
         :type pol: String
 
         :param orbit: Orbit; either "desc" (= descending) or "asc" (= ascending)
@@ -181,74 +181,80 @@ def plot_data(data_dict, station_name, orbit=None, pol=None):
     global plot_label, plot_pol, plot_title
     station = station_name
 
-    if orbit is None:
-        orbit = "desc"
-    if pol is None:
-        pol = "VV"
-
-    if type(station) != str:
-        raise TypeError("The input for the parameter \"station\" should be "
-                        "of type \"str\".")
-    try:
-        data_dict[station]
-    except KeyError:
-        print("The station " + str(station) + " was not found in the input "
-                                              "dictionary.")
-
-    if pol not in ["VV", "VH"]:
-        raise ValueError("Only \"VV\" or \"VH\" are valid options for the "
-                         "input parameter \"pol\"!")
-    elif type(pol) != str:
-        raise TypeError("The input for the parameter \"pol\" should be of "
-                        "type \"str\". Valid options are: \"VV\" or \"VH\".")
-    if orbit == "desc":
-        plot_date = data_dict[station][8].t_s1_desc
-        plot_soil = data_dict[station][8].sm
-        if pol == "VV":
-            plot_pol = data_dict[station][8].VV_desc
-            plot_label = "VV - Descending"
-            plot_title = "ISMN Soil Moisture against Sentinel-1 VV (Descending Orbit)"
-        elif pol == "VH":
-            plot_pol = data_dict[station][8].VH_desc
-            plot_label = "VH - Descending"
-            plot_title = "ISMN Soil Moisture against Sentinel-1 VH (Descending Orbit)"
-    elif orbit == "asc":
-        plot_date = data_dict[station][9].t_s1_asc
-        plot_soil = data_dict[station][9].sm
-        if pol == "VV":
-            plot_pol = data_dict[station][9].VV_asc
-            plot_label = "VV - Ascending"
-            plot_title = "ISMN Soil Moisture against Sentinel-1 VV (Ascending Orbit)"
-        elif pol == "VH":
-            plot_pol = data_dict[station][9].VH_asc
-            plot_label = "VH - Ascending"
-            plot_title = "ISMN Soil Moisture against Sentinel-1 VH (Ascending Orbit)"
+    if data_dict[station][8] is None:
+        raise KeyError("There are no data for the descending orbit for station:", station)
+    elif data_dict[station][9] is None:
+        raise KeyError("There are no data for the ascending orbit for station:", station)
     else:
-        raise ValueError("Only \"desc\" (= descending) or \"asc\" (= "
-                         "ascending) are valid options for the input "
-                         "parameter \"orbit\"!")
-    if type(orbit) != str:
-        raise TypeError("The input for the parameter \"orbit\" should be of "
-                        "type \"str\". Valid options are: \"desc\" or "
-                        "\"asc\".")
+        if orbit is None:
+            orbit = "desc"
+        if pol is None:
+            pol = "VV"
 
-    register_matplotlib_converters()
-    fig, plot1 = plt.subplots(figsize=(14, 8))
-    plot_s1 = plot1.plot(plot_date, plot_pol, color='red', label=plot_label)
+        if type(station) != str:
+            raise TypeError("The input for the parameter \"station\" should be "
+                            "of type \"str\".")
+        try:
+            data_dict[station]
+        except KeyError:
+            print("The station " + str(station) + " was not found in the input "
+                                                  "dictionary.")
 
-    plot1.set_xlabel("Year", fontsize=14)
-    plot1.set_ylabel("dB", fontsize=14)
+        if pol not in ["VV", "VH"]:
+            raise ValueError("Only \"VV\" or \"VH\" are valid options for the "
+                             "input parameter \"pol\"!")
+        elif type(pol) != str:
+            raise TypeError("The input for the parameter \"pol\" should be of "
+                            "type \"str\". Valid options are: \"VV\" or \"VH\".")
 
-    plot2 = plot1.twinx()
-    plot_sm = plot2.plot(plot_date, plot_soil, color='blue', dashes=[6, 3], label="Soil Moisture")
-    plot2.set_ylabel("Soil Moisture", fontsize=14)
+        if orbit == "desc":
+            plot_date = data_dict[station][8].t_s1_desc
+            plot_soil = data_dict[station][8].sm
+            if pol == "VV":
+                plot_pol = data_dict[station][8].VV_desc
+                plot_label = "VV - Descending"
+                plot_title = "ISMN Soil Moisture against Sentinel-1 VV (Descending Orbit)"
+            elif pol == "VH":
+                plot_pol = data_dict[station][8].VH_desc
+                plot_label = "VH - Descending"
+                plot_title = "ISMN Soil Moisture against Sentinel-1 VH (Descending Orbit)"
+        elif orbit == "asc":
+            plot_date = data_dict[station][9].t_s1_asc
+            plot_soil = data_dict[station][9].sm
+            if pol == "VV":
+                plot_pol = data_dict[station][9].VV_asc
+                plot_label = "VV - Ascending"
+                plot_title = "ISMN Soil Moisture against Sentinel-1 VV (Ascending Orbit)"
+            elif pol == "VH":
+                plot_pol = data_dict[station][9].VH_asc
+                plot_label = "VH - Ascending"
+                plot_title = "ISMN Soil Moisture against Sentinel-1 VH (Ascending Orbit)"
+        else:
+            raise ValueError("Only \"desc\" (= descending) or \"asc\" (= "
+                             "ascending) are valid options for the input "
+                             "parameter \"orbit\"!")
+        if type(orbit) != str:
+            raise TypeError("The input for the parameter \"orbit\" should be of "
+                            "type \"str\". Valid options are: \"desc\" or "
+                            "\"asc\".")
 
-    plot1.xaxis.set_major_locator(plt.MaxNLocator(10))
-    plot1.tick_params(axis='x', labelrotation=-45)
-    plots = plot_s1 + plot_sm
-    labels = [l.get_label() for l in plots]
-    plot1.legend(plots, labels, bbox_to_anchor=(1.15, 1), loc='upper left', borderaxespad=0.)
-    plt.title(plot_title, fontsize=20)
-    fig.tight_layout()
-    plt.show()
+        register_matplotlib_converters()
+        fig, plot1 = plt.subplots(figsize=(14, 8))
+        plot_s1 = plot1.plot(plot_date, plot_pol, color='red', label=plot_label)
+
+        plot1.set_xlabel("Year", fontsize=14)
+        plot1.set_ylabel("dB", fontsize=14)
+
+        plot2 = plot1.twinx()
+        plot_sm = plot2.plot(plot_date, plot_soil, color='blue', dashes=[6, 3], label="Soil Moisture")
+        plot2.set_ylabel("Soil Moisture", fontsize=14)
+
+        plot1.xaxis.set_major_locator(plt.MaxNLocator(10))
+        plot1.tick_params(axis='x', labelrotation=-45)
+        plots = plot_s1 + plot_sm
+        labels = [l.get_label() for l in plots]
+        plot1.legend(plots, labels, bbox_to_anchor=(1.15, 1), loc='upper left', borderaxespad=0.)
+        plt.title(plot_title, fontsize=20)
+        fig.tight_layout()
+        plt.show()
 
