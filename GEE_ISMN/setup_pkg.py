@@ -3,24 +3,23 @@ import os
 
 
 def setup_pkg():
-    """
-    This function runs setup_dir() and setup_ee().
+    """This function runs setup_dir() and setup_ee().
 
     setup_dir() is used to check if the subdirectory './data/ISMN/' exists,
-        where ISMN files should be stored. It also creates a new subdirectory
-        where filtered ISMN files are copied into during preprocessing.
+    where ISMN files should be stored. It also creates a new subdirectory
+    where ISMN files are copied into during preprocessing.
 
     setup_ee() is used to initialize the Google Earth Engine API.
-        ee.Initialize() checks if user credentials already exist. If that
-        isn't the case, ee.Authenticate() is called first.
-        Afterwards the user is asked for input that is relevant for the
-        extraction of backscatter timeseries from GEE.
+    ee.Initialize() checks if user credentials already exist. If that
+    isn't the case, ee.Authenticate() is called first.
+    Afterwards the user is asked for input that is relevant for the
+    extraction of backscatter timeseries from GEE.
 
-    :return: Dirctionary with user input generated through setup_ee().
+    :return: Dictionary with user input generated through setup_ee().
     """
     input_dict = {}
 
-    def setup_dir():
+    def _setup_dir():
         data_dir = './data/ISMN/'
         new_dir = './data/ISMN_Filt/'
 
@@ -35,7 +34,7 @@ def setup_pkg():
         else:
             print("Directory ", new_dir, " already exists.")
 
-    def setup_ee(input_dict):
+    def _setup_ee(input_dict):
 
         try:
             ee.Initialize()
@@ -77,12 +76,12 @@ def setup_pkg():
                 else:
                     break
             else:
-                input_dict["box_size"] = 0
+                input_dict["box_size"] = None
                 break
 
         return input_dict
 
-    setup_dir()
-    input_dict = setup_ee(input_dict)
+    _setup_dir()
+    input_dict = _setup_ee(input_dict)
 
     return input_dict
