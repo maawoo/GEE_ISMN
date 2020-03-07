@@ -182,9 +182,9 @@ def plot_data(data_dict, station_name, orbit=None, pol=None):
     station = station_name
 
     if data_dict[station][8] is None:
-        raise KeyError("There are no data for the descending orbit for station:", station)
+        raise KeyError("There is no data for the descending orbit for station:", station)
     elif data_dict[station][9] is None:
-        raise KeyError("There are no data for the ascending orbit for station:", station)
+        raise KeyError("There is no data for the ascending orbit for station:", station)
     else:
         if orbit is None:
             orbit = "desc"
