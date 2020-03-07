@@ -7,33 +7,30 @@ import csv
 
 
 def lc_filter(data_dict, input_dict, landcover_ids=None):
-    """This function adds GEE geometry objects to the data dictionary
-    (data_dict) based on parameters in input_dict.
-    The data dictionary is then filtered based on landcover IDs
-    (landcover_ids).
+    """Adds GEE geometry objects to the data dictionary (data_dict) based on
+    parameters in input_dict. The data dictionary is then filtered based on
+    landcover IDs.
 
-    :param data_dict: Dictionary that contains ISMN data to be analysed.
+    :param data_dict: Dictionary containing ISMN data to be analysed.
     Output of preprocess.data_import().
-    :type data_dict: dictionary
-
+        :type: Dictionary
     :param input_dict: Dictionary that was created via user input
     through setup_pkg(). Contains the following key/value pairs:
-        - box_yn / int of either 0 or 1
-            Depending on the value, either point objects (0) or polygons (1)
-            with the station coordinate as the midpoint are returned.
-        - box_size / any int > 0
-            Defines the polygon size and will be used for the extraction of
-            the mean backscatter of the defined region.
-    :type input_dict: dictionary
-
+            - box_yn / int of either 0 or 1
+                Depending on the value, either point objects (0) or polygons
+                (1) with the station coordinate as the midpoint are returned.
+            - box_size / any int > 0
+                Defines the polygon size and will be used for the extraction of
+                the mean backscatter of the defined region.
+        :type: Dictionary
     :param landcover_ids: Landcover IDs based on the CGLS-LC100
     dataset (https://tinyurl.com/cgls-lc100).
     Default IDs are:
-        40 = Cultivated and managed vegetation / agriculture
-        60 = Bare / sparse vegetation
-    :type landcover_ids: single int or list of int
+            40 = Cultivated and managed vegetation / agriculture
+            60 = Bare / sparse vegetation
+        :type: single int or list of int
 
-    :return: The filtered version of data_dict
+    :return: The filtered version of the input dictionary "data_dict"
     """
     data_dict_copy = copy.deepcopy(data_dict)
 
@@ -63,6 +60,7 @@ def _ee_geometries(data_dict, input_dict):
     objects based on parameters in input_dict.
 
     For parameter description see: lc_filter()
+
     :return: data_dict with added EE geometry objects.
     """
     data_dict_copy = copy.deepcopy(data_dict)
@@ -103,7 +101,7 @@ def _ee_geometries(data_dict, input_dict):
                         .buffer(input_dict["box_size"] / 2)
                         .bounds())
     else:
-        raise ValueError("Something is wrong! \n The variable box_yn should be"
+        raise ValueError("The variable box_yn should be"
                          " 0 (extract backscatter for pixel coordinates) \n "
                          "or 1 (extract mean backscatter for a bounding box). "
                          "\n Please run setup_pkg() again before continuing!")
@@ -118,6 +116,7 @@ def _ee_filter(data_dict, landcover_ids):
     (landcover_ids).
 
     For parameter description see: lc_filter()
+
     :return: Filtered version of data_dict.
     """
     data_dict_copy = copy.deepcopy(data_dict)
@@ -159,12 +158,12 @@ def get_s1_backscatter(data_dict_filt):
 
     :param data_dict_filt: Output dictionary of lc_filter(), which at this
     point should contain the following values for each key:
-        - latitude (int)
-        - longitude (int)
-        - Soil moisture data (dataframe)
-        - GEE geometry object (ee.geometry.Geometry of type 'Point' or
-        'Polygon')
-    :type data_dict_filt: dictionary
+            - latitude (int)
+            - longitude (int)
+            - Soil moisture data (dataframe)
+            - GEE geometry object (ee.geometry.Geometry of type 'Point' or
+            'Polygon')
+        :type: Dictionary
 
     :return: data_dict_filt with added image collections and dataframes
     containing backscatter timeseries (both descending & ascending).
@@ -239,7 +238,7 @@ def _get_image_collection(data_dict_filt):
     :param data_dict_filt: Output dictionary of lc_filter(). Contains
     Earth Engine geometry objects that are used to retrieve the S-1 image
     collections.
-    :type data_dict_filt: dictionary
+        :type: Dictionary
 
     :return: Dictionary with added S-1 image collections.
     """
