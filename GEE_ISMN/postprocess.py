@@ -92,7 +92,7 @@ def filter_s1(data_dict):
                 """
 
         for key in data_dict_asc.keys():
-            if data_dict_asc[key][6] is None:
+            if data_dict_asc[key][7] is None:
                 data_dict_asc[key].append(None)
                 continue
             else:
