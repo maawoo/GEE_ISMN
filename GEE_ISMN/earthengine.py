@@ -184,7 +184,7 @@ def get_s1_backscatter(data_dict_filt):
                 else:
                     print(str(key) + ": Image collection of the descending "
                                      "track is empty.\n No backscatter "
-                                     "timeseries was extracted.")
+                                     "data was extracted.")
                     data_dict[key].append(None)
 
                 if data_dict[key][5].size().getInfo() > 0:
@@ -194,7 +194,7 @@ def get_s1_backscatter(data_dict_filt):
                 else:
                     print(str(key) + ": Image collection of the ascending "
                                      "track is empty.\n No backscatter "
-                                     "timeseries was extracted.")
+                                     "data was extracted.")
                     data_dict[key].append(None)
 
             elif geo_type == 'Polygon':
@@ -206,7 +206,7 @@ def get_s1_backscatter(data_dict_filt):
                 else:
                     print(str(key) + ": Image collection of the descending "
                                      "track is empty.\n No backscatter "
-                                     "timeseries was extracted.")
+                                     "data was extracted.")
                     data_dict[key].append(None)
 
                 if data_dict[key][5].size().getInfo() > 0:
@@ -216,7 +216,7 @@ def get_s1_backscatter(data_dict_filt):
                 else:
                     print(str(key) + ": Image collection of the ascending "
                                      "track is empty.\n No backscatter "
-                                     "timeseries was extracted.")
+                                     "data was extracted.")
                     data_dict[key].append(None)
 
             else:
